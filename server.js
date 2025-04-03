@@ -121,5 +121,4 @@ userService.connect()
     console.log("unable to start the server: " + err);
     process.exit();
 });
-
 module.exports = app; // THIS MUST BE LAST
