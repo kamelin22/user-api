@@ -38,26 +38,25 @@ app.post("/api/user/register", (req, res) => {
 app.post("/api/user/login", (req, res) => {
     userService.checkUser(req.body)
     .then((user) => {
-        console.log("User found:", user); // Add logging here
+        // Create JWT payload with just _id and userName
         const payload = {
             _id: user._id,
             userName: user.userName
         };
         
+        // Sign the token with our secret
         const token = jwt.sign(payload, process.env.JWT_SECRET);
-        console.log("Token generated:", token); // Log the token
         
+        // Return the token to the client
         res.json({ 
             message: "login successful",
             token: token,
             user: payload
         });
     }).catch(msg => {
-        console.log("Error during login:", msg); // Log errors
         res.status(422).json({ "message": msg });
     });
 });
-
 
 // Protected routes - require valid JWT
 app.get("/api/user/favourites", passport.authenticate('jwt', { session: false }), (req, res) => {
