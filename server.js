@@ -9,7 +9,6 @@ const passportJWT = require('passport-jwt');
 const jwt = require('jsonwebtoken');
 
 const HTTP_PORT = process.env.PORT || 8080;
-module.exports = app; // Add this at the end
 // JWT Strategy Configuration
 const ExtractJWT = passportJWT.ExtractJwt;
 const JWTStrategy = passportJWT.Strategy;
