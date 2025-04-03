@@ -1,9 +1,10 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
+require("dotenv").config()
 
-let mongoDBConnectionString = process.env.MONGO_URL;
+let mongoDBConnectionString = process.env.MONGO_URL
 
-let Schema = mongoose.Schema;
+let Schema = mongoose.Schema
 
 let userSchema = new Schema({
     userName: {
@@ -13,57 +14,51 @@ let userSchema = new Schema({
     password: String,
     favourites: [String],
     history: [String]
-});
+})
 
-let User;
-module.exports.connect = function() {
-    return new Promise((resolve, reject) => {
-      console.log("Connecting to MongoDB..."); // Debug log
-      
-      const conn = mongoose.createConnection(process.env.MONGO_URL, {
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 30000
-      });
-  
-      conn.on('error', err => {
-        console.error('MongoDB connection error:', err);
-        reject(`DB connection failed: ${err.message}`);
-      });
-  
-      conn.once('open', () => {
-        User = conn.model("users", userSchema);
-        console.log("MongoDB connected successfully!");
-        resolve();
-      });
-    });
-  };
+let User
+
+module.exports.connect = function () {
+    return new Promise(function (resolve, reject) {
+        let db = mongoose.createConnection(mongoDBConnectionString)
+
+        db.on('error', err => {
+            reject(err)
+        })
+
+        db.once('open', () => {
+            User = db.model("users", userSchema)
+            resolve()
+        })
+    })
+}
 
 module.exports.registerUser = function (userData) {
     return new Promise(function (resolve, reject) {
 
         if (userData.password != userData.password2) {
-            reject("Passwords do not match");
+            reject("Passwords do not match")
         } else {
 
             bcrypt.hash(userData.password, 10).then(hash => {
 
-                userData.password = hash;
+                userData.password = hash
 
-                let newUser = new User(userData);
+                let newUser = new User(userData)
 
                 newUser.save().then(() => {
-                    resolve("User " + userData.userName + " successfully registered");  
+                    resolve("User " + userData.userName + " successfully registered")
                 }).catch(err => {
                     if (err.code == 11000) {
-                        reject("User Name already taken");
+                        reject("User Name already taken")
                     } else {
-                        reject("There was an error creating the user: " + err);
+                        reject("There was an error creating the user: " + err)
                     }
                 })
-            }).catch(err => reject(err));
+            }).catch(err => reject(err))
         }
-    });
-};
+    })
+}
 
 module.exports.checkUser = function (userData) {
     return new Promise(function (resolve, reject) {
@@ -73,16 +68,16 @@ module.exports.checkUser = function (userData) {
             .then(user => {
                 bcrypt.compare(userData.password, user.password).then(res => {
                     if (res === true) {
-                        resolve(user);
+                        resolve(user)
                     } else {
-                        reject("Incorrect password for user " + userData.userName);
+                        reject("Incorrect password for user " + userData.userName)
                     }
-                });
+                })
             }).catch(err => {
-                reject("Unable to find user " + userData.userName);
-            });
-    });
-};
+                reject("Unable to find user " + userData.userName)
+            })
+    })
+}
 
 module.exports.getFavourites = function (id) {
     return new Promise(function (resolve, reject) {
@@ -92,9 +87,9 @@ module.exports.getFavourites = function (id) {
             .then(user => {
                 resolve(user.favourites)
             }).catch(err => {
-                reject(`Unable to get favourites for user with id: ${id}`);
-            });
-    });
+                reject(`Unable to get favourites for user with id: ${id}`)
+            })
+    })
 }
 
 module.exports.addFavourite = function (id, favId) {
@@ -107,15 +102,15 @@ module.exports.addFavourite = function (id, favId) {
                     { $addToSet: { favourites: favId } },
                     { new: true }
                 ).exec()
-                    .then(user => { resolve(user.favourites); })
-                    .catch(err => { reject(`Unable to update favourites for user with id: ${id}`); })
+                    .then(user => { resolve(user.favourites) })
+                    .catch(err => { reject(`Unable to update favourites for user with id: ${id}`) })
             } else {
-                reject(`Unable to update favourites for user with id: ${id}`);
+                reject(`Unable to update favourites for user with id: ${id}`)
             }
 
         })
 
-    });
+    })
 
 
 }
@@ -127,12 +122,12 @@ module.exports.removeFavourite = function (id, favId) {
             { new: true }
         ).exec()
             .then(user => {
-                resolve(user.favourites);
+                resolve(user.favourites)
             })
             .catch(err => {
-                reject(`Unable to update favourites for user with id: ${id}`);
+                reject(`Unable to update favourites for user with id: ${id}`)
             })
-    });
+    })
 }
 
 module.exports.getHistory = function (id) {
@@ -143,9 +138,9 @@ module.exports.getHistory = function (id) {
             .then(user => {
                 resolve(user.history)
             }).catch(err => {
-                reject(`Unable to get history for user with id: ${id}`);
-            });
-    });
+                reject(`Unable to get history for user with id: ${id}`)
+            })
+    })
 }
 
 module.exports.addHistory = function (id, historyId) {
@@ -158,13 +153,13 @@ module.exports.addHistory = function (id, historyId) {
                     { $addToSet: { history: historyId } },
                     { new: true }
                 ).exec()
-                    .then(user => { resolve(user.history); })
-                    .catch(err => { reject(`Unable to update history for user with id: ${id}`); })
+                    .then(user => { resolve(user.history) })
+                    .catch(err => { reject(`Unable to update history for user with id: ${id}`) })
             } else {
-                reject(`Unable to update history for user with id: ${id}`);
+                reject(`Unable to update history for user with id: ${id}`)
             }
         })
-    });
+    })
 }
 
 module.exports.removeHistory = function (id, historyId) {
@@ -174,10 +169,10 @@ module.exports.removeHistory = function (id, historyId) {
             { new: true }
         ).exec()
             .then(user => {
-                resolve(user.history);
+                resolve(user.history)
             })
             .catch(err => {
-                reject(`Unable to update history for user with id: ${id}`);
+                reject(`Unable to update history for user with id: ${id}`)
             })
-    });
+    })
 }
