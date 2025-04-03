@@ -121,4 +121,14 @@ userService.connect()
     console.log("unable to start the server: " + err);
     process.exit();
 });
+const retryConnection = require('./retryConnection');
+
+retryConnection(() => userService.connect())
+  .then(() => {
+    app.listen(HTTP_PORT, () => console.log(`API running on ${HTTP_PORT}`));
+  })
+  .catch(err => {
+    console.error("FATAL: Could not connect to MongoDB", err);
+    process.exit(1);
+  });
 module.exports = app; // THIS MUST BE LAST

@@ -16,21 +16,26 @@ let userSchema = new Schema({
 });
 
 let User;
-
-module.exports.connect = function () {
-    return new Promise(function (resolve, reject) {
-        let db = mongoose.createConnection(mongoDBConnectionString);
-
-        db.on('error', err => {
-            reject(err);
-        });
-
-        db.once('open', () => {
-            User = db.model("users", userSchema);
-            resolve();
-        });
+module.exports.connect = function() {
+    return new Promise((resolve, reject) => {
+      const db = mongoose.createConnection(mongoDBConnectionString, {
+        serverSelectionTimeoutMS: 5000, // 5 sec timeout
+        socketTimeoutMS: 30000,
+        connectTimeoutMS: 10000
+      });
+  
+      db.on('error', err => {
+        console.error('MongoDB error:', err);
+        reject(`DB failed: ${err.message}`);
+      });
+  
+      db.once('open', () => {
+        User = db.model("users", userSchema);
+        console.log("MongoDB connected!");
+        resolve();
+      });
     });
-};
+  };
 
 module.exports.registerUser = function (userData) {
     return new Promise(function (resolve, reject) {
