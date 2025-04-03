@@ -18,20 +18,21 @@ let userSchema = new Schema({
 let User;
 module.exports.connect = function() {
     return new Promise((resolve, reject) => {
-      const db = mongoose.createConnection(mongoDBConnectionString, {
-        serverSelectionTimeoutMS: 5000, // 5 sec timeout
-        socketTimeoutMS: 30000,
-        connectTimeoutMS: 10000
+      console.log("Connecting to MongoDB..."); // Debug log
+      
+      const conn = mongoose.createConnection(process.env.MONGO_URL, {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 30000
       });
   
-      db.on('error', err => {
-        console.error('MongoDB error:', err);
-        reject(`DB failed: ${err.message}`);
+      conn.on('error', err => {
+        console.error('MongoDB connection error:', err);
+        reject(`DB connection failed: ${err.message}`);
       });
   
-      db.once('open', () => {
-        User = db.model("users", userSchema);
-        console.log("MongoDB connected!");
+      conn.once('open', () => {
+        User = conn.model("users", userSchema);
+        console.log("MongoDB connected successfully!");
         resolve();
       });
     });
