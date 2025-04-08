@@ -114,15 +114,39 @@ app.get("/api/user/history", passport.authenticate('jwt', { session: false }), (
 
 })
 
-app.put("/api/user/history/:id", passport.authenticate('jwt', { session: false }), (req, res) => {
-    userService.addHistory(req.user._id, req.params.id)
+// Update this route in your server file
+app.put("/api/user/history", passport.authenticate('jwt', { session: false }), (req, res) => {
+    if (!req.body.queryString) {
+        return res.status(400).json({ error: "queryString is required" });
+    }
+    
+    // Generate a unique ID for the history item (since service expects an ID)
+    const historyId = `hist_${Date.now()}`;
+    
+    userService.addHistory(req.user._id, historyId)
         .then(data => {
-            res.json(data)
-        }).catch(msg => {
-            res.status(422).json({ error: msg })
+            // Manually update the history item with the query string
+            return User.findByIdAndUpdate(
+                req.user._id,
+                { 
+                    $pull: { history: historyId }, // Remove the temporary ID
+                    $push: { 
+                        history: {
+                            $each: [req.body.queryString],
+                            $slice: -50 // Keep only last 50 items
+                        } 
+                    }
+                },
+                { new: true }
+            ).exec();
         })
-})
-
+        .then(updatedUser => {
+            res.json(updatedUser.history);
+        })
+        .catch(msg => {
+            res.status(422).json({ error: msg });
+        });
+});
 app.delete("/api/user/history/:id", passport.authenticate('jwt', { session: false }), (req, res) => {
     userService.removeHistory(req.user._id, req.params.id)
         .then(data => {
